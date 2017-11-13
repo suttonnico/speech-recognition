@@ -94,14 +94,14 @@ test = read_timit_txt('data/lisa/data/timit/raw/TIMIT/TRAIN/DR1/FCJF0/SA1.PHN')
 
 anot = pair_mfcc_with_pho(win_mids,test[0], test[1], test[2])
 
-
+print('Processing train data... this could take a while')
 features = []
 labels = []
 first = 1
 base_train_dir = './data/lisa/data/timit/raw/TIMIT/TRAIN'
 DRS = [DR for DR in os.listdir(base_train_dir) ]#if os.path.isfile(f)]
 for DR in DRS:
-    print(DR)
+    #print(DR)
     folders = [folder for folder in os.listdir(base_train_dir+'/'+DR)]
     for folder in folders:
         #print(folder)
@@ -127,6 +127,10 @@ for DR in DRS:
 np.save('features_train.npy',features)
 np.save('labels_train.npy',labels)
 
+print('Save successful')
+print('Processing test data... another while')
+
+
 features = []
 labels = []
 first = 1
@@ -134,7 +138,7 @@ first = 1
 base_test_dir = './data/lisa/data/timit/raw/TIMIT/TEST'
 DRS = [DR for DR in os.listdir(base_train_dir) ]#if os.path.isfile(f)]
 for DR in DRS:
-    print(DR)
+    #print(DR)
     folders = [folder for folder in os.listdir(base_test_dir+'/'+DR)]
     for folder in folders:
         #print(folder)
@@ -159,3 +163,6 @@ for DR in DRS:
 
 np.save('features_test.npy',features)
 np.save('labels_test.npy',labels)
+
+
+print('Save successful')
