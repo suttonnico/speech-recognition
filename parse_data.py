@@ -30,7 +30,7 @@ WORD_DIC = {v: k for k, v in enumerate(string.ascii_lowercase + ' ')}
 def num2softmax(anot):
     soft_arr = np.zeros([len(anot),61])
     for i in range(len(anot)):
-        soft_arr[i,anot[i]] = 1
+        soft_arr[i,int(anot[i])] = 1
     return soft_arr
 
 def pair_mfcc_with_pho(win_mids,start_ind,end_ind,pho):
@@ -83,6 +83,7 @@ def read_timit_txt(f):
             end += 1
     return start_ind, end_ind, pho
 
+
 (fs, x) = wavfile.read('data/lisa/data/timit/raw/TIMIT/TRAIN/DR1/FCJF0/SA1.wav')
 
 
@@ -93,6 +94,10 @@ test = read_timit_txt('data/lisa/data/timit/raw/TIMIT/TRAIN/DR1/FCJF0/SA1.PHN')
 
 anot = pair_mfcc_with_pho(win_mids,test[0], test[1], test[2])
 
+
+features = []
+labels = []
+first = 1
 base_train_dir = './data/lisa/data/timit/raw/TIMIT/TRAIN'
 DRS = [DR for DR in os.listdir(base_train_dir) ]#if os.path.isfile(f)]
 for DR in DRS:
@@ -111,9 +116,20 @@ for DR in DRS:
                 win_mids = (np.arange(len(mfcc_feat)) + 1) * fs * 0.01
                 [starts,ends,pho] = read_timit_txt(base_train_dir+'/'+DR+'/'+folder+'/'+pf)
                 anot = pair_mfcc_with_pho(win_mids, starts, ends, pho)
+                soft = num2softmax(anot)
+                if first == 1:
+                    features = mfcc_feat
+                    labels = soft
+                    first = 0
+                features = np.append(features, mfcc_feat, axis=0)
+                labels = np.append(labels, soft, axis=0)
+
+np.save('features_train.npy',features)
+np.save('labels_train.npy',labels)
 
 features = []
 labels = []
+first = 1
 
 base_test_dir = './data/lisa/data/timit/raw/TIMIT/TEST'
 DRS = [DR for DR in os.listdir(base_train_dir) ]#if os.path.isfile(f)]
@@ -134,6 +150,12 @@ for DR in DRS:
                 [starts,ends,pho] = read_timit_txt(base_test_dir+'/'+DR+'/'+folder+'/'+pf)
                 anot = pair_mfcc_with_pho(win_mids, starts, ends, pho)
                 soft = num2softmax(anot)
-                print(np.shape(mfcc_feat))
-                print(np.shape(soft))
-                exit(1111)
+                if first == 1:
+                    features = mfcc_feat
+                    labels = soft
+                    first = 0
+                features = np.append(features, mfcc_feat, axis=0)
+                labels = np.append(labels, soft, axis=0)
+
+np.save('features_test.npy',features)
+np.save('labels_test.npy',labels)
