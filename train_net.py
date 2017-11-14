@@ -80,11 +80,11 @@ training_iteration = 30
 batch_size = 200
 display_step = 2
 
-x = tf.placeholder(features_train.dtype, [None, 13])
-y = tf.placeholder(labels_train.dtype, [None, 61])
+x = tf.placeholder("float", [None, 13])
+y = tf.placeholder("float", [None, 61])
 
-W = tf.Variable(tf.zeros([13, 61],dtype=features_train.dtype))
-b = tf.Variable(tf.zeros([61],dtype=labels_train.dtype))
+W = tf.Variable(tf.zeros([13, 61]))#,dtype=features_train.dtype))
+b = tf.Variable(tf.zeros([61]))#,dtype=labels_train.dtype))
 
 with tf.name_scope("Wx_b") as scope:
 
@@ -121,11 +121,12 @@ with tf.Session() as sess:
         avg_cost = 0
         [N, M] = np.shape(features_train)
         total_batch = (int(N/batch_size))
+        for i in range(total_batch):
+            batch_xs , batch_ys = dataset.next_batch(batch_size)
+            sess.run(optimizer,feed_dict={x: batch_xs, y:batch_ys})
+            avg_cost += sess.run(cost_function, feed_dict={x: batch_xs, y:batch_ys})
 
-        avg_cost += sess.run(cost_function, feed_dict={features_placeholder: features_train, labels_placeholder: labels_train})
-
-        summary_str = sess.run(merged_summary_op, feed_dict={features_placeholder: features_train,
-                                              labels_placeholder: labels_train})
+        summary_str = sess.run(merged_summary_op, feed_dict={x: batch_xs, y:batch_ys})
         #summary_writer.
 
         if iteration % display_step == 0:
