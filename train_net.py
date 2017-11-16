@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-
+from tensorflow.contrib import rnn
 
 class DataSet(object):
 
@@ -66,25 +66,109 @@ class DataSet(object):
     return self._features[start:end], self._labels[start:end]
 
 
+LOGDIR = '/logs'
 
 features_train = np.load('features_train.npy')
 labels_train = np.load('labels_train.npy')
 features_test = np.load('features_test.npy')
 labels_test = np.load('labels_test.npy')
 
+dataset = DataSet(features_train,labels_train)
+test_dataset = DataSet(features_test,labels_test)
 
 #dataset = tf.data.Dataset.from_tensor_slices((features_train, labels_train))
 
-learning_rate = 0.01
+learning_rate = 1
 training_iteration = 30
 batch_size = 200
-display_step = 2
+display_step = 200
+training_steps = 10000
 
-x = tf.placeholder("float", [None, 13])
-y = tf.placeholder("float", [None, 61])
 
-W = tf.Variable(tf.zeros([13, 61]))#,dtype=features_train.dtype))
-b = tf.Variable(tf.zeros([61]))#,dtype=labels_train.dtype))
+#model
+num_input = 13
+num_hidden = 200        #estos dos
+timesteps = 1         #son de prueba
+num_classes = 61
+X = tf.placeholder("float", [None, timesteps, num_input])
+Y = tf.placeholder("float", [None, num_classes])
+
+#W = tf.Variable(tf.zeros([13, 61]))#,dtype=features_train.dtype))
+#b = tf.Variable(tf.zeros([61]))#,dtype=labels_train.dtype))
+
+
+# Define weights
+weights = {
+    'out': tf.Variable(tf.random_normal([num_hidden, num_classes]))
+}
+biases = {
+    'out': tf.Variable(tf.random_normal([num_classes]))
+}
+
+def RNN(x, weights, biases):
+
+    # Prepare data shape to match `rnn` function requirements
+    # Current data input shape: (batch_size, timesteps, n_input)
+    # Required shape: 'timesteps' tensors list of shape (batch_size, n_input)
+
+    # Unstack to get a list of 'timesteps' tensors of shape (batch_size, n_input)
+    x = tf.unstack(x, timesteps, 1)
+
+    # Define a lstm cell with tensorflow
+    lstm_cell = rnn.BasicLSTMCell(num_hidden, forget_bias=1.0)
+
+    # Get lstm cell output
+    outputs, states = rnn.static_rnn(lstm_cell, x, dtype=tf.float32)
+
+    # Linear activation, using rnn inner loop last output
+    return tf.matmul(outputs[-1], weights['out']) + biases['out']
+
+
+logits = RNN(X, weights, biases)
+prediction = tf.nn.softmax(logits)
+
+# Define loss and optimizer
+loss_op = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+    logits=logits, labels=Y))
+optimizer = tf.train.GradientDescentOptimizer(learning_rate=learning_rate)
+train_op = optimizer.minimize(loss_op)
+
+# Evaluate model (with test logits, for dropout to be disabled)
+correct_pred = tf.equal(tf.argmax(prediction, 1), tf.argmax(Y, 1))
+accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+
+# Initialize the variables (i.e. assign their default value)
+init = tf.global_variables_initializer()
+
+ #Start training
+with tf.Session() as sess:
+
+    # Run the initializer
+    sess.run(init)
+
+    for step in range(1, training_steps+1):
+        batch_x, batch_y = dataset.next_batch(batch_size)
+        # Reshape data to get 28 seq of 28 elements
+        batch_x = batch_x.reshape((batch_size, timesteps, num_input))
+        # Run optimization op (backprop)
+        sess.run(train_op, feed_dict={X: batch_x, Y: batch_y})
+        if step % display_step == 0 or step == 1:
+            # Calculate batch loss and accuracy
+            loss, acc = sess.run([loss_op, accuracy], feed_dict={X: batch_x,
+                                                                 Y: batch_y})
+            print("Step " + str(step) + ", Minibatch Loss= " + \
+                  "{:.4f}".format(loss) + ", Training Accuracy= " + \
+                  "{:.3f}".format(acc))
+
+    print("Optimization Finished!")
+
+    # Calculate accuracy for 128 mnist test images
+    test_len = 1000
+    test_data, test_label = dataset.next_batch(test_len)
+    print("Testing Accuracy:", \
+        sess.run(accuracy, feed_dict={X: test_data, Y: test_label}))
+
+exit(23)
 
 with tf.name_scope("Wx_b") as scope:
 
