@@ -13,6 +13,22 @@ def reshape_data(features,timesteps):
             out[i, j, :] = features[i+j, :]
     return out
 
+def pho2mouth(label):
+    nout = np.zeros(9)
+
+
+def pho2mouth_arr(labels):
+    out = np.zeros([len(labels),9])
+    for i in range(len(labels)):
+        out[i] = pho2mouth(labels[i])
+    return out
+
+PHONEME_LIST = [
+    'aa', 'ae', 'ah', 'ao', 'aw', 'ax', 'ax-h', 'axr', 'ay', 'b', 'bcl', 'ch', 'd', 'dcl', 'dh',
+    'dx', 'eh', 'el', 'em', 'en', 'eng', 'epi', 'er', 'ey', 'f', 'g', 'gcl', 'h#', 'hh', 'hv', 'ih',
+    'ix', 'iy', 'jh', 'k', 'kcl', 'l', 'm', 'n', 'ng', 'nx', 'ow', 'oy', 'p', 'pau', 'pcl', 'q', 'r',
+    's', 'sh', 't', 'tcl', 'th', 'uh', 'uw', 'ux', 'v', 'w', 'y', 'z', 'zh']
+
 
 features_train = np.load('features_train.npy')
 labels_train = np.load('labels_train.npy')
@@ -33,6 +49,7 @@ print('Ready')
 # expected input data shape: (batch_size, timesteps, data_dim)
 model = Sequential()
 model.add(LSTM(200, return_sequences=True,input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
+model.add(LSTM(200, return_sequences=True))  # returns a sequence of vectors of dimension 32
 model.add(LSTM(200, return_sequences=True))  # returns a sequence of vectors of dimension 32
 model.add(LSTM(200, return_sequences=True))  # returns a sequence of vectors of dimension 32
 model.add(LSTM(200))  # return a single vector of dimension 32

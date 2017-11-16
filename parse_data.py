@@ -3,10 +3,10 @@ import string
 import numpy as np
 import argparse
 
-from tensorpack import *
-from tensorpack.utils.argtools import memoized
-from tensorpack.utils.stats import OnlineMoments
-from tensorpack.utils.utils import get_tqdm
+#from tensorpack import *
+#from tensorpack.utils.argtools import memoized
+#from tensorpack.utils.stats import OnlineMoments
+#from tensorpack.utils.utils import get_tqdm
 
 import scipy.io.wavfile as wavfile
 import matplotlib.pyplot as plt
@@ -14,7 +14,7 @@ import os
 
 from python_speech_features import mfcc
 
-import librosa
+#import librosa
 
 CHARSET = set(string.ascii_lowercase + ' ')
 PHONEME_LIST = [
@@ -22,6 +22,7 @@ PHONEME_LIST = [
     'dx', 'eh', 'el', 'em', 'en', 'eng', 'epi', 'er', 'ey', 'f', 'g', 'gcl', 'h#', 'hh', 'hv', 'ih',
     'ix', 'iy', 'jh', 'k', 'kcl', 'l', 'm', 'n', 'ng', 'nx', 'ow', 'oy', 'p', 'pau', 'pcl', 'q', 'r',
     's', 'sh', 't', 'tcl', 'th', 'uh', 'uw', 'ux', 'v', 'w', 'y', 'z', 'zh']
+
 
 PHONEME_DIC = {v: k for k, v in enumerate(PHONEME_LIST)}
 WORD_DIC = {v: k for k, v in enumerate(string.ascii_lowercase + ' ')}
