@@ -2,6 +2,7 @@ import scipy.io.wavfile as wavfile
 import string
 import numpy as np
 import argparse
+from python_speech_features import base
 
 #from tensorpack import *
 #from tensorpack.utils.argtools import memoized
@@ -114,6 +115,9 @@ for DR in DRS:
                 pf = f[0:len(f)-3]+'PHN'
                 (fs, x) = wavfile.read(base_train_dir+'/'+DR+'/'+folder+'/'+f)
                 mfcc_feat = mfcc_wav(base_train_dir+'/'+DR+'/'+folder+'/'+f, 0.02, 0.01)
+                mfcc_delta = base.delta(mfcc_feat, 2)
+                mfcc_delta_delta = base.delta(mfcc_delta, 2)
+                mfcc_feat = np.hstack([mfcc_feat, mfcc_delta, mfcc_delta_delta])
                 win_mids = (np.arange(len(mfcc_feat)) + 1) * fs * 0.01
                 [starts,ends,pho] = read_timit_txt(base_train_dir+'/'+DR+'/'+folder+'/'+pf)
                 anot = pair_mfcc_with_pho(win_mids, starts, ends, pho)
@@ -151,6 +155,9 @@ for DR in DRS:
                 pf = f[0:len(f)-3]+'PHN'
                 (fs, x) = wavfile.read(base_test_dir+'/'+DR+'/'+folder+'/'+f)
                 mfcc_feat = mfcc_wav(base_test_dir+'/'+DR+'/'+folder+'/'+f, 0.02, 0.01)
+                mfcc_delta = base.delta(mfcc_feat, 2)
+                mfcc_delta_delta = base.delta(mfcc_delta, 2)
+                mfcc_feat = np.hstack([mfcc_feat, mfcc_delta, mfcc_delta_delta])
                 win_mids = (np.arange(len(mfcc_feat)) + 1) * fs * 0.01
                 [starts,ends,pho] = read_timit_txt(base_test_dir+'/'+DR+'/'+folder+'/'+pf)
                 anot = pair_mfcc_with_pho(win_mids, starts, ends, pho)

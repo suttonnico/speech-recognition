@@ -3,6 +3,7 @@ from keras.models import Sequential
 from keras.layers import Dense, Dropout
 from keras.layers import Embedding
 from keras.layers import LSTM
+from keras.models import model_from_json
 
 
 def reshape_data(features,timesteps):
@@ -160,28 +161,29 @@ labels_train = np.load('labels_train.npy')
 features_test = np.load('features_test.npy')
 labels_test = np.load('labels_test.npy')
 
+
 print('Changing phonemes to mouths')
 labels_train = pho2mouth_arr(labels_train)
 labels_test = pho2mouth_arr(labels_test)
 print('Done')
 
-data_dim = 13
-timesteps = 20
+data_dim = 39
+timesteps = 4
 num_classes = 9
 print('Reshaping data for LSTM')
 features_train = reshape_data(features_train,timesteps)
 features_test = reshape_data(features_test,timesteps)
 labels_train = labels_train[0:len(labels_train)-timesteps]
 labels_test = labels_test[0:len(labels_test)-timesteps]
-labels_test = labels_test[0:1000]
-features_test = features_test[0:1000]
+#labels_test = labels_test[0:1000]
+#features_test = features_test[0:1000]
 print('Ready')
 # expected input data shape: (batch_size, timesteps, data_dim)
 model = Sequential()
 model.add(LSTM(250, return_sequences=True,input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
 model.add(LSTM(250, return_sequences=True))  # returns a sequence of vectors of dimension 32
-model.add(LSTM(250, return_sequences=True))  # returns a sequence of vectors of dimension 32
-model.add(LSTM(250, return_sequences=True))  # returns a sequence of vectors of dimension 32
+#model.add(LSTM(250, return_sequences=True))  # returns a sequence of vectors of dimension 32
+#model.add(LSTM(250, return_sequences=True))  # returns a sequence of vectors of dimension 32
 model.add(LSTM(250))  # return a single vector of dimension 32
 model.add(Dense(9, activation='softmax'))
 
@@ -197,7 +199,14 @@ model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['accu
 #x_val = np.random.random((100, timesteps, data_dim))
 #y_val = np.random.random((100, num_classes))
 
-model.fit(features_train, labels_train,batch_size=100, epochs=100,validation_data=(features_test, labels_test))
+model.fit(features_train, labels_train,batch_size=100, epochs=1,validation_data=(features_test, labels_test))
+
+model_json = model.to_json()
+with open("model.json", "w") as json_file:
+    json_file.write(model_json)
+# serialize weights to HDF5
+model.save_weights("model.h5")
+print("Saved model to disk")
 
 
 
