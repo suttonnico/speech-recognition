@@ -4,8 +4,7 @@ from keras.layers import Dense, Dropout
 from keras.layers import Embedding
 from keras.layers import LSTM
 from keras.models import model_from_json
-import pickle
-import matplotlib.pyplot as plt
+
 
 def reshape_data(features,timesteps):
     [N, M] = np.shape(features)
@@ -155,104 +154,42 @@ def pho2mouth_arr(labels):
         out[i] = pho2mouth(labels[i])
     return out
 
+def train():
+    features_train = np.load('features_train.npy')
+    labels_train = np.load('labels_train.npy')
+    features_test = np.load('features_test.npy')
+    labels_test = np.load('labels_test.npy')
 
 
-features_train = np.load('features_train.npy')
-labels_train = np.load('labels_train.npy')
-features_test = np.load('features_test.npy')
-labels_test = np.load('labels_test.npy')
+    print('Changing phonemes to mouths')
+    labels_train = pho2mouth_arr(labels_train)
+    labels_test = pho2mouth_arr(labels_test)
+    print('Done')
+
+    data_dim = 39
+    timesteps = 8
+    num_classes = 9
+    print('Reshaping data for LSTM')
+    features_train = reshape_data(features_train,timesteps)
+    features_test = reshape_data(features_test,timesteps)
+    labels_train = labels_train[0:len(labels_train)-timesteps]
+    labels_test = labels_test[0:len(labels_test)-timesteps]
 
 
-print('Changing phonemes to mouths')
-labels_train = pho2mouth_arr(labels_train)
-labels_test = pho2mouth_arr(labels_test)
-print('Done')
+    json_file = open('model.json', 'r')
+    loaded_model_json = json_file.read()
+    json_file.close()
+    loaded_model = model_from_json(loaded_model_json)
+# load weights into new model
+    loaded_model.load_weights("model.h5")
+    print("Loaded model from disk")
+    loaded_model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
+    loaded_model.fit(features_train, labels_train,batch_size=100, epochs=1,validation_data=(features_test, labels_test))
 
-data_dim = 39
-timesteps = 8
-num_classes = 9
-print('Reshaping data for LSTM')
-features_train = reshape_data(features_train,timesteps)
-features_test = reshape_data(features_test,timesteps)
-labels_train = labels_train[0:len(labels_train)-timesteps]
-labels_test = labels_test[0:len(labels_test)-timesteps]
-#labels_test = labels_test[0:1000]
-#features_test = features_test[0:1000]
-print('Ready')
-# expected input data shape: (batch_size, timesteps, data_dim)
-model = Sequential()
-model.add(LSTM(250, return_sequences=True,input_shape=(timesteps, data_dim)))  # returns a sequence of vectors of dimension 32
-#model.add(LSTM(50, return_sequences=True))  # returns a sequence of vectors of dimension 32
-#model.add(LSTM(250, return_sequences=True))  # returns a sequence of vectors of dimension 32
-model.add(LSTM(250, return_sequences=True))  # returns a sequence of vectors of dimension 32
-model.add(LSTM(250))  # return a single vector of dimension 32
-model.add(Dense(9, activation='softmax'))
-
-model.compile(loss='categorical_crossentropy',optimizer='rmsprop',metrics=['accuracy'])
-
-# Generate dummy training data
-#x_train = np.random.random((1000, timesteps, data_dim))
-#y_train = np.random.random((1000, num_classes))
-
-#print(np.shape(x_train))
-#exit(123)
-# Generate dummy validation data
-#x_val = np.random.random((100, timesteps, data_dim))
-#y_val = np.random.random((100, num_classes))
-
-history = model.fit(features_train, labels_train,batch_size=100, epochs=4,validation_data=(features_test, labels_test))
-
-train_loss=history.history['loss']
-val_loss=history.history['val_loss']
-train_acc=history.history['acc']
-val_acc=history.history['val_acc']
-
-plt.figure()
-plt.plot(train_loss,label='loss')
-plt.legend(loc='upper right')
-plt.title('Train loss 3 layer 250h 8 timesteps')
-plt.xlabel('epoch')
-plt.ylabel('value')
-plt.savefig('TL3l250h8t.png')
-
-plt.figure()
-plt.plot(val_acc,label='Accuracy')
-plt.legend(loc='upper right')
-plt.title('Val_acc 3 layer 250h 8 timesteps')
-plt.xlabel('epoch')
-plt.ylabel('value')
-plt.savefig('ValAcc3l250h8t.png')
-
-plt.figure()
-plt.plot(val_loss,label='loss')
-plt.legend(loc='upper right')
-plt.title('Val_loss 3 layer 250h 8 timesteps')
-plt.xlabel('epoch')
-plt.ylabel('value')
-plt.savefig('Valloss3l250h8t.png')
-
-plt.figure()
-plt.plot(train_acc,label='loss')
-plt.legend(loc='upper right')
-plt.title('Train Accuracy 3 layer 250h 8 timesteps')
-plt.xlabel('epoch')
-plt.ylabel('value')
-plt.savefig('TA3l250h8t.png')
-
-
-model_json = model.to_json()
-with open("model.json", "w") as json_file:
-    json_file.write(model_json)
+    model_json = loaded_model.to_json()
+    with open("model.json", "w") as json_file:
+        json_file.write(model_json)
 # serialize weights to HDF5
-model.save_weights("model.h5")
-print("Saved model to disk")
-
-
-
-
-
-
-
-
-
+    loaded_model.save_weights("model.h5")
+    print("Saved model to disk")
 
