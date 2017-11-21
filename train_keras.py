@@ -206,7 +206,7 @@ train_loss=history.history['loss']
 val_loss=history.history['val_loss']
 train_acc=history.history['acc']
 val_acc=history.history['val_acc']
-
+#test
 plt.figure()
 plt.plot(train_loss,label='loss')
 plt.legend(loc='upper right')
